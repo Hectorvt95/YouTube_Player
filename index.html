@@ -1,712 +1,483 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="referrer" content="strict-origin-when-cross-origin" />
-  <meta name="theme-color" content="#0f0f13" />
-  <title>YT Music Streamer</title>
-  <style>
-    :root {
-      --bg: #0f0f13;
-      --surface: #1b1b22;
-      --surface-hover: #252530;
-      --accent: #ff3b5c;
-      --accent-soft: rgba(255, 59, 92, 0.18);
-      --text: #f4f4f6;
-      --muted: #a1a1b0;
-      --border: #2c2c38;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Tube Player</title>
+<style>
+:root{
+  --bg:#f6f5f2;--card:#fff;--text:#1d1d1f;--mute:#6b6b70;--line:#e3e1dc;--acc:#e0245e;--accfg:#fff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121214;--card:#1c1c20;--text:#f2f2f4;--mute:#9a9aa2;--line:#2c2c32;--acc:#ff4d88;--accfg:#111;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121214;--card:#1c1c20;--text:#f2f2f4;--mute:#9a9aa2;--line:#2c2c32;--acc:#ff4d88;--accfg:#111;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+h1{font-size:22px;margin:0}
+.head-actions{display:flex;gap:8px;align-items:center}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      display: flex;
-      justify-content: center;
-    }
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.video{position:relative;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.empty{display:grid;place-items:center;height:100%;color:#aaa;text-align:center;padding:16px}
+.now{margin:12px 0 8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-    .app {
-      width: 100%;
-      max-width: 540px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding-bottom: 28px;
-    }
+button{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.on{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+button.main{background:var(--acc);color:var(--accfg);border-color:var(--acc);min-width:84px;font-weight:600}
+button.sm{padding:5px 10px;font-size:13px;border-radius:8px}
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
+.tabs{display:flex;gap:8px;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{background:transparent;border:1px solid var(--line);color:var(--mute);padding:6px 12px;border-radius:999px;font-size:13px}
+.tab.active{background:var(--acc);color:var(--accfg);border-color:var(--acc);font-weight:600}
+.panel{display:none}
+.panel.active{display:block}
 
-    header h1 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
+.add{display:grid;grid-template-columns:2fr 1fr auto;gap:8px}
+.search-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.key-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+input{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-width:0}
+input:focus{outline:none;border-color:var(--acc)}
+@media (max-width:560px){.add{grid-template-columns:1fr}}
 
-    .icon-btn {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
+.chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:5px 11px;border-radius:999px;font-size:13px;color:var(--mute)}
+.chip.active{border-color:var(--acc);color:var(--acc);font-weight:600}
 
-    .banner {
-      background: rgba(255, 165, 0, 0.14);
-      border: 1px solid #f59e0b;
-      color: #fde68a;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 0.82rem;
-      line-height: 1.4;
-      display: none;
-    }
+.msg{color:var(--mute);font-size:13px;margin-top:8px;min-height:18px}
+.msg.err{color:var(--acc)}
 
-    .banner.visible { display: block; }
+/* Queue container with visible bar */
+.q-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.q-title{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+.badge{font-size:12px;font-weight:600;color:var(--mute);background:var(--bg);border:1px solid var(--line);padding:2px 8px;border-radius:999px}
+.q-actions{display:flex;gap:6px;align-items:center}
 
-    .api-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-    }
+.queue-box{
+  max-height:290px;
+  overflow-y:auto;
+  background:var(--bg);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:4px 8px;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:var(--mute) var(--bg);
+}
+.queue-box::-webkit-scrollbar{width:9px}
+.queue-box::-webkit-scrollbar-track{background:var(--bg);border-radius:8px}
+.queue-box::-webkit-scrollbar-thumb{background:var(--mute);border-radius:8px;border:2px solid var(--bg)}
+.queue-box::-webkit-scrollbar-thumb:hover{background:var(--acc)}
 
-    .api-box.open { display: flex; }
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid var(--line)}
+li:first-child{border-top:0}
+li.cur{color:var(--acc);font-weight:600}
+li .n{color:var(--mute);width:24px;text-align:right;font-size:13px;flex-shrink:0}
+li.cur .n{color:var(--acc)}
+li .thumb{width:48px;height:36px;border-radius:6px;object-fit:cover;background:#000;flex-shrink:0}
+li .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+li .sub{display:block;font-size:12px;font-weight:400;color:var(--mute);overflow:hidden;text-overflow:ellipsis}
+.x{padding:4px 9px;font-size:13px;flex-shrink:0}
 
-    .api-box label {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-    }
-
-    input[type="text"], input[type="password"] {
-      flex: 1;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-size: 0.95rem;
-      outline: none;
-    }
-
-    input:focus { border-color: var(--accent); }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 0 16px;
-      font-weight: 600;
-      font-size: 0.92rem;
-      cursor: pointer;
-    }
-
-    .chips {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding-bottom: 2px;
-    }
-
-    .chips::-webkit-scrollbar { display: none; }
-
-    .chip {
-      flex: 0 0 auto;
-      background: var(--surface);
-      color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 7px 14px;
-      font-size: 0.82rem;
-      cursor: pointer;
-    }
-
-    .chip.active {
-      background: var(--accent-soft);
-      color: var(--text);
-      border-color: var(--accent);
-    }
-
-    .player-wrap {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      border-radius: 14px;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid var(--border);
-    }
-
-    .player-wrap iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
-
-    .player-placeholder {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      font-size: 0.9rem;
-      text-align: center;
-      padding: 16px;
-      pointer-events: none;
-    }
-
-    .now-playing {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .now-playing.visible { display: flex; }
-
-    .np-info { min-width: 0; flex: 1; }
-
-    .np-title {
-      font-size: 0.92rem;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .np-sub {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .np-controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .ctrl-btn {
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      width: 38px;
-      height: 38px;
-      display: grid;
-      place-items: center;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-
-    .ctrl-btn.play {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .status {
-      font-size: 0.85rem;
-      color: var(--muted);
-      text-align: center;
-      padding: 6px 12px;
-    }
-
-    .status.error { color: #ff6b81; }
-
-    .track-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .track {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--surface);
-      border: 1px solid transparent;
-      border-radius: 12px;
-      padding: 8px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .track:hover { background: var(--surface-hover); }
-
-    .track.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
-
-    .track img {
-      width: 72px;
-      height: 54px;
-      object-fit: cover;
-      border-radius: 8px;
-      flex-shrink: 0;
-      background: #000;
-    }
-
-    .track-meta { min-width: 0; flex: 1; }
-
-    .track-title {
-      font-size: 0.88rem;
-      font-weight: 500;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .track-artist {
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-top: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .queue-add {
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-  </style>
+.results-box{max-height:260px;overflow-y:auto;margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:4px 8px;background:var(--bg);scrollbar-width:thin;scrollbar-color:var(--mute) var(--bg)}
+.results-box::-webkit-scrollbar{width:8px}
+.results-box::-webkit-scrollbar-thumb{background:var(--mute);border-radius:8px;border:2px solid var(--bg)}
+.results-box:empty{display:none}
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>YT Music Streamer</h1>
-      <button class="icon-btn" id="toggle-key-btn">API Key</button>
-    </header>
-
-    <div class="banner" id="origin-banner">
-      <strong>Local file detected (<code>file://</code>):</strong> YouTube blocks embeds that do not come from an <code>http://</code> or <code>https://</code> address (causing <strong>Error 153</strong>). Serve this file via <code>http://localhost:8080</code> or host it on GitHub Pages / Netlify Drop.
+<main>
+  <div class="head">
+    <h1>?? Tube Player</h1>
+    <div class="head-actions">
+      <button id="themeBtn" class="sm" title="Switch Light/Dark theme">?? Theme</button>
     </div>
-
-    <div class="api-box" id="api-box">
-      <label for="api-key-input">YouTube Data API v3 Key (saved locally in browser)</label>
-      <div class="row">
-        <input type="password" id="api-key-input" placeholder="Paste your AIza... key" />
-        <button class="btn-primary" id="save-key-btn">Save</button>
-      </div>
-    </div>
-
-    <form class="row" id="search-form">
-      <input type="text" id="search-input" placeholder="Search songs, artists, or albums..." />
-      <button class="btn-primary" type="submit">Search</button>
-    </form>
-
-    <div class="chips" id="chips"></div>
-
-    <div class="player-wrap" id="player-wrap">
-      <div class="player-placeholder" id="placeholder">
-        Search a song and tap to play
-      </div>
-    </div>
-
-    <div class="now-playing" id="now-playing">
-      <div class="np-info">
-        <div class="np-title" id="np-title"></div>
-        <div class="np-sub" id="np-sub"></div>
-      </div>
-      <div class="np-controls">
-        <button class="ctrl-btn" id="prev-btn" title="Previous">⏮</button>
-        <button class="ctrl-btn play" id="play-btn" title="Play/Pause">▶</button>
-        <button class="ctrl-btn" id="next-btn" title="Next">⏭</button>
-      </div>
-    </div>
-
-    <div class="status" id="status"></div>
-    <div class="track-list" id="track-list"></div>
   </div>
 
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script>
-    const GENRES = ["Lo-Fi Beats", "Synthwave", "Acoustic", "Jazz", "Rock", "Classical"];
-    const STORAGE_KEY = "yt_music_api_key";
+  <!-- Player Card -->
+  <div class="card">
+    <div class="video" id="stage"><div class="empty">Add a YouTube link or search below to start listening.</div></div>
+    <div class="now" id="now">Nothing playing</div>
+    <div class="ctrls">
+      <button id="prev" title="Previous">?</button>
+      <button id="play" class="main">? Play</button>
+      <button id="next" title="Next">?</button>
+      <button id="shuf" title="Shuffle">?? Shuffle</button>
+      <button id="rep" title="Repeat all">?? Repeat</button>
+    </div>
+  </div>
 
-    let apiKey = localStorage.getItem(STORAGE_KEY) || "";
-    let ytApiReady = false;
-    let player = null;
-    let playerReady = false;
-    let playerIframe = null;
-    let useNoCookie = false;
-    let retried153 = false;
-    let loadedVideoId = null;
+  <!-- Add Links / Search Card -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tabLink" type="button">Paste Link</button>
+      <button class="tab" id="tabSearch" type="button">Search YouTube</button>
+    </div>
 
-    let searchResults = [];
-    let queue = [];
-    let currentIndex = -1;
-    let isPlaying = false;
+    <!-- Paste Link Panel -->
+    <div class="panel active" id="panelLink">
+      <div class="add">
+        <input id="url" placeholder="Paste a YouTube video or playlist link" autocomplete="off">
+        <input id="ttl" placeholder="Title (optional)" autocomplete="off">
+        <button id="addBtn" class="main" type="button">Add</button>
+      </div>
+      <div class="msg" id="msg">Tip: paste several links at once, one per line.</div>
+    </div>
 
-    const originBanner = document.getElementById("origin-banner");
-    const apiBox = document.getElementById("api-box");
-    const apiKeyInput = document.getElementById("api-key-input");
-    const toggleKeyBtn = document.getElementById("toggle-key-btn");
-    const saveKeyBtn = document.getElementById("save-key-btn");
-    const searchForm = document.getElementById("search-form");
-    const searchInput = document.getElementById("search-input");
-    const chipsEl = document.getElementById("chips");
-    const playerWrap = document.getElementById("player-wrap");
-    const placeholderEl = document.getElementById("placeholder");
-    const nowPlayingEl = document.getElementById("now-playing");
-    const npTitleEl = document.getElementById("np-title");
-    const npSubEl = document.getElementById("np-sub");
-    const prevBtn = document.getElementById("prev-btn");
-    const playBtn = document.getElementById("play-btn");
-    const nextBtn = document.getElementById("next-btn");
-    const statusEl = document.getElementById("status");
-    const trackListEl = document.getElementById("track-list");
+    <!-- Search YouTube Panel -->
+    <div class="panel" id="panelSearch">
+      <div class="key-row" id="keyRow">
+        <input id="apiKeyInput" type="password" placeholder="YouTube Data API v3 Key (saved locally)" autocomplete="off">
+        <button id="saveKeyBtn" type="button">Save Key</button>
+      </div>
+      <div class="search-row">
+        <input id="searchInput" placeholder="Search songs, artists, or albums..." autocomplete="off">
+        <button id="searchBtn" class="main" type="button">Search</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="msg" id="searchMsg"></div>
+      <div class="results-box" id="resultsBox"><ul id="resultsList"></ul></div>
+    </div>
+  </div>
 
-    window.onYouTubeIframeAPIReady = () => { ytApiReady = true; };
+  <!-- Scrollable Queue Container Card -->
+  <div class="card">
+    <div class="q-head">
+      <div class="q-title">
+        <span>Queue</span>
+        <span class="badge" id="qCount">0 songs</span>
+      </div>
+      <div class="q-actions">
+        <button id="jumpCur" class="sm" type="button" title="Scroll to current song">Now Playing</button>
+        <button id="clear" class="sm" type="button">Clear playlist</button>
+      </div>
+    </div>
+    <div class="queue-box" id="queueBox">
+      <ul id="list"></ul>
+    </div>
+  </div>
+</main>
 
-    function decodeHtml(str) {
-      return new DOMParser().parseFromString(str, "text/html").documentElement.textContent || "";
-    }
+<script>
+(function(){
+  var KEY='tubeplayer:v2';
+  var OLD_KEY='tubeplayer:v1';
+  var API_STORAGE='yt_music_api_key';
+  var THEME_KEY='tubeplayer:theme';
+  var GENRES=['Lo-Fi Beats','Synthwave','Acoustic','Jazz','Rock','Classical'];
 
-    function setStatus(msg, isError = false) {
-      statusEl.textContent = msg;
-      statusEl.className = isError ? "status error" : "status";
-    }
+  var S={items:[],idx:-1,shuffle:false,repeat:true};
+  var playing=false, frame=null, activeChip='';
+  var $=function(id){return document.getElementById(id)};
 
-    function buildEmbedUrl(videoId) {
-      const host = useNoCookie
-        ? "https://www.youtube-nocookie.com"
-        : "https://www.youtube.com";
+  function initTheme(){
+    var saved=localStorage.getItem(THEME_KEY);
+    if(saved==='dark'||saved==='light') document.documentElement.setAttribute('data-theme',saved);
+  }
+  $('themeBtn').onclick=function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var sysDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next=(cur==='dark'||(!cur&&sysDark))?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem(THEME_KEY,next);
+  };
 
-      const params = new URLSearchParams({
-        autoplay: "1",
-        playsinline: "1",
-        controls: "1",
-        rel: "0",
-        enablejsapi: "1"
-      });
-
-      if (/^https?:$/.test(window.location.protocol)) {
-        params.set("origin", window.location.origin);
-      }
-
-      return `${host}/embed/${encodeURIComponent(videoId)}?${params.toString()}`;
-    }
-
-    function mountIframeAndPlayer(videoId) {
-      if (player && typeof player.destroy === "function") {
-        player.destroy();
-      }
-      if (playerIframe) {
-        playerIframe.remove();
-      }
-
-      player = null;
-      playerReady = false;
-      loadedVideoId = videoId;
-
-      // Create iframe explicitly WITH referrerpolicy before YT.Player attaches
-      playerIframe = document.createElement("iframe");
-      playerIframe.id = "yt-player-frame";
-      playerIframe.title = "YouTube music player";
-      playerIframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
-      playerIframe.allowFullscreen = true;
-      playerIframe.referrerPolicy = "strict-origin-when-cross-origin";
-      playerIframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-      playerIframe.src = buildEmbedUrl(videoId);
-
-      playerWrap.prepend(playerIframe);
-
-      if (ytApiReady && window.YT && window.YT.Player) {
-        attachYtPlayer();
-      } else {
-        const waitInterval = setInterval(() => {
-          if (window.YT && window.YT.Player) {
-            clearInterval(waitInterval);
-            ytApiReady = true;
-            attachYtPlayer();
-          }
-        }, 150);
-      }
-    }
-
-    function attachYtPlayer() {
-      if (!playerIframe || player) return;
-      player = new YT.Player(playerIframe, {
-        events: {
-          onReady: () => {
-            playerReady = true;
-            const current = queue[currentIndex];
-            if (current && current.videoId !== loadedVideoId) {
-              loadedVideoId = current.videoId;
-              player.loadVideoById(current.videoId);
-            }
-          },
-          onStateChange: (event) => {
-            if (event.data === YT.PlayerState.PLAYING) {
-              isPlaying = true;
-              playBtn.textContent = "⏸";
-              setStatus("");
-            } else if (event.data === YT.PlayerState.PAUSED) {
-              isPlaying = false;
-              playBtn.textContent = "▶";
-            } else if (event.data === YT.PlayerState.ENDED) {
-              isPlaying = false;
-              playBtn.textContent = "▶";
-              if (currentIndex < queue.length - 1) {
-                playAtIndex(currentIndex + 1);
-              }
-            }
-          },
-          onError: (e) => {
-            if (e.data === 153) {
-              if (!retried153) {
-                retried153 = true;
-                useNoCookie = !useNoCookie;
-                setStatus("Retrying embed with privacy-enhanced player...");
-                const current = queue[currentIndex];
-                if (current) mountIframeAndPlayer(current.videoId);
-                return;
-              }
-              setStatus(
-                "Error 153: YouTube requires an http:// or https:// page with Referer headers enabled (check file:// URL or ad-blocker/privacy shields).",
-                true
-              );
-              return;
-            }
-
-            setStatus(`Track unavailable for embedding (Error ${e.data}). Skipping...`, true);
-            if (currentIndex < queue.length - 1) {
-              setTimeout(() => playAtIndex(currentIndex + 1), 1000);
-            }
-          }
-        }
-      });
-    }
-
-    function renderChips(activeTerm = "") {
-      chipsEl.innerHTML = "";
-      GENRES.forEach((genre) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "chip" + (activeTerm.toLowerCase() === genre.toLowerCase() ? " active" : "");
-        btn.textContent = genre;
-        btn.addEventListener("click", () => {
-          searchInput.value = genre;
-          searchSongs(genre);
-        });
-        chipsEl.appendChild(btn);
-      });
-    }
-
-    async function searchSongs(query) {
-      const q = query.trim();
-      if (!q) return;
-      if (!apiKey) {
-        apiBox.classList.add("open");
-        setStatus("Please enter and save your YouTube Data API v3 key first.", true);
-        return;
-      }
-
-      renderChips(q);
-      setStatus("Searching YouTube...");
-      trackListEl.innerHTML = "";
-
-      try {
-        const params = new URLSearchParams({
-          part: "snippet",
-          type: "video",
-          videoCategoryId: "10",
-          videoEmbeddable: "true",
-          maxResults: "20",
-          q,
-          key: apiKey
-        });
-
-        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data?.error?.message || `HTTP ${res.status}`);
-        }
-
-        searchResults = (data.items || []).map((item) => ({
-          videoId: item.id.videoId,
-          title: decodeHtml(item.snippet.title),
-          artist: decodeHtml(item.snippet.channelTitle),
-          thumbnail: item.snippet.thumbnails?.medium?.url || ""
-        }));
-
-        if (searchResults.length === 0) {
-          setStatus("No embeddable music videos found.");
-          return;
-        }
-
-        setStatus("");
-        renderTracks();
-      } catch (err) {
-        setStatus(`Error: ${err.message}`, true);
-      }
-    }
-
-    function renderTracks() {
-      trackListEl.innerHTML = "";
-      const activeId = queue[currentIndex]?.videoId;
-
-      searchResults.forEach((track, idx) => {
-        const row = document.createElement("div");
-        row.className = "track" + (track.videoId === activeId ? " active" : "");
-
-        const img = document.createElement("img");
-        if (track.thumbnail.startsWith("https://")) img.src = track.thumbnail;
-        img.alt = track.title;
-
-        const meta = document.createElement("div");
-        meta.className = "track-meta";
-
-        const title = document.createElement("div");
-        title.className = "track-title";
-        title.textContent = track.title;
-
-        const artist = document.createElement("div");
-        artist.className = "track-artist";
-        artist.textContent = track.artist;
-
-        meta.append(title, artist);
-
-        const queueBtn = document.createElement("button");
-        queueBtn.className = "queue-add";
-        queueBtn.type = "button";
-        queueBtn.textContent = "+ Queue";
-        queueBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          addToQueue(track);
-        });
-
-        row.append(img, meta, queueBtn);
-        row.addEventListener("click", () => {
-          queue = [...searchResults];
-          playAtIndex(idx);
-        });
-
-        trackListEl.appendChild(row);
-      });
-    }
-
-    function addToQueue(track) {
-      if (!queue.some((t) => t.videoId === track.videoId)) {
-        queue.push(track);
-        if (currentIndex === -1) {
-          playAtIndex(0);
-        } else {
-          updateNowPlayingUI();
+  function load(){
+    try{
+      var r=localStorage.getItem(KEY)||localStorage.getItem(OLD_KEY);
+      if(r){
+        var d=JSON.parse(r);
+        if(d&&Array.isArray(d.items)){
+          S.items=d.items;
+          S.shuffle=!!d.shuffle;
+          S.repeat=d.repeat!==false;
         }
       }
+    }catch(e){}
+  }
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify({items:S.items,shuffle:S.shuffle,repeat:S.repeat}))}catch(e){}
+  }
+
+  function decodeHtml(str){
+    return new DOMParser().parseFromString(str,'text/html').documentElement.textContent||'';
+  }
+
+  function parse(s){
+    s=s.trim(); if(!s) return null;
+    var list=(s.match(/[?&]list=([\w-]+)/)||[])[1]||null;
+    var vid=(s.match(/[?&]v=([\w-]{11})/)||s.match(/youtu\.be\/([\w-]{11})/)||s.match(/(?:shorts|embed|live)\/([\w-]{11})/)||[])[1]||null;
+    if(!vid && /^[\w-]{11}$/.test(s)) vid=s;
+    if(!vid && !list) return null;
+    return {id:vid,list:list&&!vid?list:null};
+  }
+
+  function add(){
+    var lines=$('url').value.split(/\n|\s{2,}/).filter(Boolean), ok=0, bad=0, t=$('ttl').value.trim();
+    lines.forEach(function(l){
+      var p=parse(l);
+      if(!p){bad++;return}
+      p.title=(lines.length===1&&t)?t:(p.list?'Playlist '+p.list.slice(0,8):'Track '+p.id);
+      S.items.push(p);ok++;
+    });
+    $('msg').textContent=ok?('Added '+ok+' item'+(ok>1?'s':'')+(bad?' ('+bad+' not recognised)':'')+'.'):'That doesn’t look like a YouTube link.';
+    if(ok){$('url').value='';$('ttl').value='';save();render();if(S.idx<0)go(S.items.length-ok)}
+  }
+
+  function src(it){
+    var base='https://www.youtube-nocookie.com/embed/';
+    var q='?autoplay=1&enablejsapi=1&playsinline=1&rel=0';
+    if(/^https?:$/.test(location.protocol)) q+='&origin='+encodeURIComponent(location.origin);
+    if(it.list) return base+'videoseries'+q+'&list='+encodeURIComponent(it.list);
+    return base+encodeURIComponent(it.id)+q;
+  }
+
+  function go(i){
+    if(i<0||i>=S.items.length)return;
+    S.idx=i;var it=S.items[i];
+    $('stage').innerHTML='';
+    frame=document.createElement('iframe');
+    frame.src=src(it);
+    frame.referrerPolicy='strict-origin-when-cross-origin';
+    frame.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
+    frame.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';
+    frame.setAttribute('allowfullscreen','');
+    frame.title=it.title;
+    frame.addEventListener('load',function(){
+      try{frame.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),'*')}catch(e){}
+    });
+    $('stage').appendChild(frame);
+    playing=true;ui();render();scrollCurrentIntoView();
+  }
+
+  function cmd(f){try{frame&&frame.contentWindow.postMessage(JSON.stringify({event:'command',func:f,args:[]}),'*')}catch(e){}}
+
+  function next(auto){
+    if(!S.items.length)return;
+    var n;
+    if(S.shuffle&&S.items.length>1){do{n=Math.floor(Math.random()*S.items.length)}while(n===S.idx)}
+    else{n=S.idx+1;if(n>=S.items.length){if(S.repeat)n=0;else if(auto){playing=false;ui();return}else n=0}}
+    go(n);
+  }
+  function prev(){if(!S.items.length)return;go(S.idx<=0?S.items.length-1:S.idx-1)}
+
+  window.addEventListener('message',function(e){
+    if(!frame||e.source!==frame.contentWindow)return;
+    var d;try{d=typeof e.data==='string'?JSON.parse(e.data):e.data}catch(x){return}
+    if(!d)return;
+    var st=null;
+    if(d.event==='onStateChange')st=d.info;
+    else if(d.event==='infoDelivery'&&d.info&&typeof d.info.playerState==='number')st=d.info.playerState;
+    if(st===null)return;
+    if(st===0){var it=S.items[S.idx];if(!(it&&it.list))next(true)}
+    else if(st===1){playing=true;ui()}
+    else if(st===2){playing=false;ui()}
+  });
+
+  function ui(){
+    var it=S.items[S.idx];
+    $('now').textContent=it?((S.idx+1)+'/'+S.items.length+' • '+it.title):'Nothing playing';
+    $('play').textContent=playing?'? Pause':'? Play';
+    $('shuf').className=S.shuffle?'on':'';
+    $('rep').className=S.repeat?'on':'';
+    $('qCount').textContent=S.items.length+' '+(S.items.length===1?'song':'songs');
+  }
+
+  function scrollCurrentIntoView(){
+    var cur=$('list').querySelector('li.cur');
+    if(cur) cur.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+
+  function render(){
+    var ul=$('list');ul.innerHTML='';
+    ui();
+    if(!S.items.length){
+      var li=document.createElement('li');
+      li.style.color='var(--mute)';
+      li.textContent='Your playlist is empty. Add a link or search above.';
+      ul.appendChild(li);
+      return;
     }
+    S.items.forEach(function(it,i){
+      var li=document.createElement('li');if(i===S.idx)li.className='cur';
+      var n=document.createElement('span');n.className='n';n.textContent=(i===S.idx?'?':(i+1));
+      li.appendChild(n);
 
-    function playAtIndex(index) {
-      if (index < 0 || index >= queue.length) return;
-      currentIndex = index;
-      retried153 = false;
-      const track = queue[currentIndex];
-      placeholderEl.style.display = "none";
-      setStatus("");
-      updateNowPlayingUI();
-      renderTracks();
-
-      if (!playerIframe) {
-        mountIframeAndPlayer(track.videoId);
-      } else if (player && playerReady) {
-        loadedVideoId = track.videoId;
-        player.loadVideoById(track.videoId);
-      } else {
-        mountIframeAndPlayer(track.videoId);
+      if(it.id&&/^[\w-]{11}$/.test(it.id)){
+        var img=document.createElement('img');img.className='thumb';
+        img.src='https://i.ytimg.com/vi/'+it.id+'/mqdefault.jpg';
+        img.alt='';
+        img.loading='lazy';
+        li.appendChild(img);
       }
-    }
 
-    function updateNowPlayingUI() {
-      const track = queue[currentIndex];
-      if (!track) return;
-      nowPlayingEl.classList.add("visible");
-      npTitleEl.textContent = track.title;
-      npSubEl.textContent = `${track.artist} • Track ${currentIndex + 1}/${queue.length}`;
-    }
+      var t=document.createElement('span');t.className='t';
+      t.textContent=it.title;
+      if(it.artist){
+        var sub=document.createElement('span');sub.className='sub';sub.textContent=it.artist;
+        t.appendChild(sub);
+      }
+      t.onclick=function(){go(i)};
 
-    toggleKeyBtn.addEventListener("click", () => {
-      apiBox.classList.toggle("open");
-      apiKeyInput.value = apiKey;
+      var r=document.createElement('button');r.className='x';r.title='Rename';r.textContent='?';
+      r.onclick=function(){var v=prompt('Title',it.title);if(v){it.title=v;save();render()}};
+
+      var x=document.createElement('button');x.className='x';x.textContent='?';x.title='Remove';
+      x.onclick=function(){
+        S.items.splice(i,1);
+        if(i<S.idx)S.idx--;
+        else if(i===S.idx){S.idx=-1;playing=false;$('stage').innerHTML='<div class="empty">Add a YouTube link or search below to start listening.</div>';frame=null}
+        save();render();
+      };
+
+      li.appendChild(t);li.appendChild(r);li.appendChild(x);
+      ul.appendChild(li);
     });
+  }
 
-    saveKeyBtn.addEventListener("click", () => {
-      apiKey = apiKeyInput.value.trim();
-      localStorage.setItem(STORAGE_KEY, apiKey);
-      apiBox.classList.remove("open");
-      setStatus(apiKey ? "API key saved. Search for a song!" : "API key cleared.");
-      if (apiKey && searchInput.value.trim()) searchSongs(searchInput.value);
+  /* Tabs */
+  function setTab(mode){
+    var isLink=(mode==='link');
+    $('tabLink').classList.toggle('active',isLink);
+    $('tabSearch').classList.toggle('active',!isLink);
+    $('panelLink').classList.toggle('active',isLink);
+    $('panelSearch').classList.toggle('active',!isLink);
+  }
+  $('tabLink').onclick=function(){setTab('link')};
+  $('tabSearch').onclick=function(){setTab('search')};
+
+  /* YouTube Data API Search (optional) */
+  function renderChips(){
+    var c=$('chips');c.innerHTML='';
+    GENRES.forEach(function(g){
+      var b=document.createElement('button');b.type='button';
+      b.className='chip'+(activeChip===g?' active':'');
+      b.textContent=g;
+      b.onclick=function(){$('searchInput').value=g;runSearch(g)};
+      c.appendChild(b);
     });
+  }
 
-    searchForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      searchSongs(searchInput.value);
-    });
+  function setSearchMsg(text,err){
+    var el=$('searchMsg');el.textContent=text||'';
+    el.className=err?'msg err':'msg';
+  }
 
-    playBtn.addEventListener("click", () => {
-      if (!player || !playerReady) return;
-      if (isPlaying) player.pauseVideo();
-      else player.playVideo();
-    });
-
-    prevBtn.addEventListener("click", () => {
-      if (currentIndex > 0) playAtIndex(currentIndex - 1);
-    });
-
-    nextBtn.addEventListener("click", () => {
-      if (currentIndex < queue.length - 1) playAtIndex(currentIndex + 1);
-    });
-
-    // Init
-    if (!/^https?:$/.test(window.location.protocol)) {
-      originBanner.classList.add("visible");
-    }
-    if (!apiKey) apiBox.classList.add("open");
+  async function runSearch(q){
+    q=(q||'').trim();if(!q)return;
+    var apiKey=localStorage.getItem(API_STORAGE)||'';
+    if(!apiKey){setSearchMsg('Enter and save your YouTube Data API v3 key first.',true);return}
+    activeChip=GENRES.indexOf(q)>=0?q:'';
     renderChips();
-    if (apiKey) {
-      searchInput.value = "Lo-Fi Beats";
-      searchSongs("Lo-Fi Beats");
+    setSearchMsg('Searching YouTube...');
+    $('resultsList').innerHTML='';
+    try{
+      var params=new URLSearchParams({
+        part:'snippet',type:'video',videoCategoryId:'10',
+        videoEmbeddable:'true',maxResults:'15',q:q,key:apiKey
+      });
+      var res=await fetch('https://www.googleapis.com/youtube/v3/search?'+params);
+      var data=await res.json();
+      if(!res.ok) throw new Error((data&&data.error&&data.error.message)||('HTTP '+res.status));
+      var items=(data.items||[]).map(function(item){
+        return {
+          id:item.id.videoId,
+          list:null,
+          title:decodeHtml(item.snippet.title),
+          artist:decodeHtml(item.snippet.channelTitle)
+        };
+      });
+      if(!items.length){setSearchMsg('No embeddable songs found.');return}
+      setSearchMsg('');
+      renderSearchResults(items);
+    }catch(err){
+      setSearchMsg('Error: '+err.message,true);
     }
-  </script>
+  }
+
+  function addSearchItem(item,playNow){
+    var existing=S.items.findIndex(function(x){return x.id===item.id&&!x.list});
+    if(existing>=0){
+      if(playNow)go(existing);
+      return;
+    }
+    S.items.push({id:item.id,list:null,title:item.title,artist:item.artist});
+    save();render();
+    if(playNow||S.idx<0) go(S.items.length-1);
+  }
+
+  function renderSearchResults(items){
+    var ul=$('resultsList');ul.innerHTML='';
+    items.forEach(function(item){
+      var li=document.createElement('li');
+      var img=document.createElement('img');img.className='thumb';
+      img.src='https://i.ytimg.com/vi/'+encodeURIComponent(item.id)+'/mqdefault.jpg';
+      img.alt='';
+
+      var t=document.createElement('span');t.className='t';t.textContent=item.title;
+      var sub=document.createElement('span');sub.className='sub';sub.textContent=item.artist;
+      t.appendChild(sub);
+      t.onclick=function(){addSearchItem(item,true)};
+
+      var qBtn=document.createElement('button');qBtn.className='x';qBtn.type='button';qBtn.textContent='+ Queue';
+      qBtn.onclick=function(){addSearchItem(item,false);qBtn.textContent='? Added'};
+
+      li.appendChild(img);li.appendChild(t);li.appendChild(qBtn);
+      ul.appendChild(li);
+    });
+  }
+
+  $('apiKeyInput').value=localStorage.getItem(API_STORAGE)||'';
+  $('saveKeyBtn').onclick=function(){
+    var v=$('apiKeyInput').value.trim();
+    localStorage.setItem(API_STORAGE,v);
+    setSearchMsg(v?'API key saved.':'API key cleared.');
+  };
+  $('searchBtn').onclick=function(){runSearch($('searchInput').value)};
+  $('searchInput').addEventListener('keydown',function(e){if(e.key==='Enter')runSearch($('searchInput').value)});
+
+  /* Controls */
+  $('addBtn').onclick=add;
+  $('url').addEventListener('keydown',function(e){if(e.key==='Enter')add()});
+  $('play').onclick=function(){
+    if(S.idx<0){if(S.items.length)go(0);return}
+    if(playing){cmd('pauseVideo');playing=false}else{cmd('playVideo');playing=true}
+    ui();
+  };
+  $('next').onclick=function(){next(false)};
+  $('prev').onclick=prev;
+  $('shuf').onclick=function(){S.shuffle=!S.shuffle;save();ui()};
+  $('rep').onclick=function(){S.repeat=!S.repeat;save();ui()};
+  $('jumpCur').onclick=scrollCurrentIntoView;
+  $('clear').onclick=function(){
+    if(!S.items.length||!confirm('Clear the whole playlist?'))return;
+    S.items=[];S.idx=-1;playing=false;frame=null;
+    $('stage').innerHTML='<div class="empty">Add a YouTube link or search below to start listening.</div>';
+    save();render();
+  };
+
+  initTheme();
+  renderChips();
+  load();
+  render();
+})();
+</script>
 </body>
 </html>
